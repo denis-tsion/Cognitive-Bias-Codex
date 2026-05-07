@@ -85,6 +85,43 @@
       outline-offset: 2px;
     }
 
+    #bot-links {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .bot-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--item-bg);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .bot-link:hover {
+      background: var(--panel);
+      border-color: var(--strong-line);
+    }
+
+    .bot-link svg {
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
     #hint {
       position: fixed;
       bottom: 24px;
@@ -244,6 +281,17 @@
 <div id="hint">Колесо миші — зум &nbsp;·&nbsp; Перетягування — переміщення</div>
 
 <button id="sidebar-toggle" title="Пошук упереджень">☰</button>
+
+<div id="bot-links">
+  <a class="bot-link" href="https://chatgpt.com/g/g-A4R3ommwC-cbe-2-0-cognitive-bias-expert" target="_blank" rel="noopener noreferrer">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    CBE 2.0
+  </a>
+  <a class="bot-link" href="https://chatgpt.com/g/g-684c063dd7a08191aa0b0466c262680e-e-narativ-2-0" target="_blank" rel="noopener noreferrer">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Є-Наратив 2.0
+  </a>
+</div>
 
 <aside id="sidebar">
   <div id="sidebar-header">
