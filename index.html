@@ -99,6 +99,133 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.4);
       pointer-events: none;
       opacity: 0.85;
+      transition: left 0.28s cubic-bezier(.4,0,.2,1);
+    }
+
+    #hint.shifted { left: calc(var(--sidebar-w) + 24px); }
+
+    :root { --sidebar-w: 300px; }
+
+    #sidebar-toggle {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 200;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--item-bg);
+      color: var(--ink);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+      transition: background 0.15s, border-color 0.15s, left 0.28s cubic-bezier(.4,0,.2,1);
+    }
+
+    #sidebar-toggle:hover { background: var(--panel); border-color: var(--strong-line); }
+    #sidebar-toggle.open { left: calc(var(--sidebar-w) + 8px); }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: calc(-1 * var(--sidebar-w) - 2px);
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--sheet-bg);
+      border-right: 1px solid var(--line);
+      z-index: 190;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+      transition: left 0.28s cubic-bezier(.4,0,.2,1);
+    }
+
+    #sidebar.open { left: 0; }
+
+    #sidebar-header {
+      padding: 16px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    #sidebar-header h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    #bias-search {
+      width: 100%;
+      background: var(--item-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--ink);
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    #bias-search::placeholder { color: rgba(230,237,244,.35); }
+
+    #bias-search:focus {
+      border-color: var(--focus-ring);
+      box-shadow: 0 0 0 2px rgba(112,184,222,.18);
+    }
+
+    #bias-count {
+      font-size: 11px;
+      color: rgba(230,237,244,.4);
+      margin-top: 6px;
+    }
+
+    #bias-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 6px 0;
+    }
+
+    #bias-list::-webkit-scrollbar { width: 4px; }
+    #bias-list::-webkit-scrollbar-track { background: transparent; }
+    #bias-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+    .bias-item {
+      display: block;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: var(--ink);
+      text-decoration: none;
+      line-height: 1.4;
+      border-left: 2px solid transparent;
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .bias-item:hover {
+      background: rgba(20,38,52,.9);
+      border-left-color: var(--focus-ring);
+    }
+
+    .bias-item mark {
+      background: rgba(112,184,222,.28);
+      color: var(--ink);
+      border-radius: 2px;
+    }
+
+    #bias-empty {
+      padding: 20px 14px;
+      font-size: 13px;
+      color: rgba(230,237,244,.35);
+      display: none;
     }
   </style>
 </head>
@@ -115,6 +242,19 @@
 </div>
 
 <div id="hint">Колесо миші — зум &nbsp;·&nbsp; Перетягування — переміщення</div>
+
+<button id="sidebar-toggle" title="Пошук упереджень">☰</button>
+
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <h2>Упередження</h2>
+    <input id="bias-search" type="search" placeholder="Пошук…" autocomplete="off" spellcheck="false">
+    <div id="bias-count"></div>
+  </div>
+  <div id="bias-list">
+    <div id="bias-empty">Нічого не знайдено</div>
+  </div>
+</aside>
 
 <script>
   const container = document.getElementById('container');
@@ -263,6 +403,63 @@
     const svgEl = wrapper.querySelector('svg');
     if (svgEl) fitToScreen(svgEl);
   });
+
+  // ── Sidebar ───────────────────────────────────────────────
+  const BIASES = [{"name":"Евристика доступності","url":"https://uk.wikipedia.org/wiki/Евристика доступності"},{"name":"Упередження уваги","url":"https://uk.wikipedia.org/wiki/Упередження уваги"},{"name":"Ефект ілюзії правди","url":"https://uk.wikipedia.org/wiki/Ефект ілюзії правди"},{"name":"Ефект знайомства","url":"https://uk.wikipedia.org/wiki/Ефект знайомства"},{"name":"Контекстний ефект","url":"https://uk.wikipedia.org/wiki/Контекстний ефект"},{"name":"Забування залежне від підказки","url":"https://uk.wikipedia.org/wiki/Забування залежне від підказки"},{"name":"Відповідність настрою","url":"https://uk.wikipedia.org/wiki/Відповідність настрою"},{"name":"Ілюзія частотності","url":"https://uk.wikipedia.org/wiki/Феномен Баадера-Майнгоф"},{"name":"Феномен Баадера-Майнгоф","url":"https://uk.wikipedia.org/wiki/Феномен Баадера-Майнгоф"},{"name":"Розрив емпатії","url":"https://uk.wikipedia.org/wiki/Розрив емпатії"},{"name":"Упередження оминання","url":"https://uk.wikipedia.org/wiki/Упередження оминання"},{"name":"Омана базового відсотка","url":"https://uk.wikipedia.org/wiki/Омана базового відсотка"},{"name":"Ефект дивини","url":"https://uk.wikipedia.org/wiki/Ефект дивини"},{"name":"Ефект гумору","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_гумору"},{"name":"Ефект фон Ресторф","url":"https://uk.wikipedia.org/wiki/Ефект фон Ресторф"},{"name":"Ефект переваги зображення","url":"https://uk.wikipedia.org/wiki/Ефект переваги зображення"},{"name":"Ефект посилання на себе","url":"https://uk.wikipedia.org/wiki/Ефект посилання на себе"},{"name":"Упередження негативу","url":"https://uk.wikipedia.org/wiki/Упередження негативу"},{"name":"Якорування","url":"https://uk.wikipedia.org/wiki/Якорування"},{"name":"Консерватизм","url":"https://uk.wikipedia.org/wiki/Консерватизм (перегляд переконань)"},{"name":"Ефект контрасту","url":"https://uk.wikipedia.org/wiki/Ефект контрасту"},{"name":"Упередження відмінності","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_відмінності"},{"name":"Ефект фокусування","url":"https://uk.wikipedia.org/wiki/Якорування#Ефект_фокусування"},{"name":"Обмеження рамками","url":"https://uk.wikipedia.org/wiki/Обмеження рамками (соціальні науки)"},{"name":"Ілюзія грошей","url":"https://uk.wikipedia.org/wiki/Ілюзія грошей"},{"name":"Закон Вебера — Фехнера","url":"https://uk.wikipedia.org/wiki/Закон Вебера — Фехнера"},{"name":"Підтверджувальне упередження","url":"https://uk.wikipedia.org/wiki/Підтверджувальне упередження"},{"name":"Упередження відповідності","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_відповідності"},{"name":"Упередження підтримки вибору","url":"https://uk.wikipedia.org/wiki/Підтримка здійсненого вибору"},{"name":"Підтримка здійсненого вибору","url":"https://uk.wikipedia.org/wiki/Підтримка здійсненого вибору"},{"name":"Селективне сприйняття","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Селективне_сприйняття"},{"name":"Ефект очікувань спостерігача","url":"https://uk.wikipedia.org/wiki/Ефект очікувань спостерігача"},{"name":"Упередження експериментатора","url":"https://uk.wikipedia.org/wiki/Ефект очікувань спостерігача#упередження_експериментатора"},{"name":"Ефект спостерігача","url":"https://uk.wikipedia.org/wiki/Ефект очікувань спостерігача"},{"name":"Упередження очікувань","url":"https://uk.wikipedia.org/wiki/Ефект очікувань спостерігача"},{"name":"Ефект страуса","url":"https://uk.wikipedia.org/wiki/Ефект страуса"},{"name":"Суб'єктивне підтвердження","url":"https://uk.wikipedia.org/wiki/Суб'єктивне підтвердження"},{"name":"Сталість дискредитованих переконань","url":"https://uk.wikipedia.org/wiki/Підтверджувальне упередження#Сталість_дискредитованих_переконань"},{"name":"Рефлекс Земмельвейса","url":"https://uk.wikipedia.org/wiki/Рефлекс Земмельвейса"},{"name":"Сліпа пляма упереджень","url":"https://uk.wikipedia.org/wiki/Сліпа пляма упереджень"},{"name":"Наївний цинізм","url":"https://uk.wikipedia.org/wiki/Наївний цинізм"},{"name":"Наївний реалізм","url":"https://uk.wikipedia.org/wiki/Наївний реалізм"},{"name":"Конфабуляція","url":"https://uk.wikipedia.org/wiki/Конфабуляція"},{"name":"Ілюзія кластерів","url":"https://uk.wikipedia.org/wiki/Ілюзія кластерів"},{"name":"Нечутливість до розміру вибірки","url":"https://uk.wikipedia.org/wiki/Нечутливість до розміру вибірки"},{"name":"Нехтування ймовірністю","url":"https://uk.wikipedia.org/wiki/Відкидання ймовірності"},{"name":"Анекдотичні докази","url":"https://uk.wikipedia.org/wiki/Анекдотичні докази"},{"name":"Ілюзія вагомості","url":"https://uk.wikipedia.org/wiki/Ілюзія вагомості"},{"name":"Помилка людини в масці","url":"https://uk.wikipedia.org/wiki/Помилка людини в масці"},{"name":"Ілюзія недавності","url":"https://uk.wikipedia.org/wiki/Ілюзія недавності"},{"name":"Омана гравця","url":"https://uk.wikipedia.org/wiki/Омана гравця"},{"name":"Омана «куй поки гаряче»","url":"https://uk.wikipedia.org/wiki/Омана «куй поки гаряче»"},{"name":"Ілюзорна кореляція","url":"https://uk.wikipedia.org/wiki/Ілюзорна кореляція"},{"name":"Парейдолія","url":"https://uk.wikipedia.org/wiki/Парейдолія"},{"name":"Антропоморфізм","url":"https://uk.wikipedia.org/wiki/Антропоморфізм"},{"name":"Помилка групової атрибуції","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Помилка_групової_атрибуції"},{"name":"Остаточна помилка атрибуції","url":"https://uk.wikipedia.org/wiki/Остаточна помилка атрибуції"},{"name":"Стереотипування","url":"https://uk.wikipedia.org/wiki/Стереотип (психологія)"},{"name":"Есенціалізм","url":"https://uk.wikipedia.org/wiki/Есенціалізм"},{"name":"Функціональна фіксація","url":"https://uk.wikipedia.org/wiki/Обмеженість функцією"},{"name":"Ефект моральної ліцензії","url":"https://uk.wikipedia.org/wiki/Ефект моральної ліцензії"},{"name":"Гіпотеза справедливого світу","url":"https://uk.wikipedia.org/wiki/Гіпотеза справедливого світу"},{"name":"Аргумент від хибності","url":"https://uk.wikipedia.org/wiki/Аргумент від помилки"},{"name":"Упередження авторитету","url":"https://uk.wikipedia.org/wiki/Упередження авторитету"},{"name":"Упередження автоматизації","url":"https://uk.wikipedia.org/wiki/Упередження автоматизації"},{"name":"Ефект приєднання до більшості","url":"https://uk.wikipedia.org/wiki/Ефект приєднання до більшості"},{"name":"Ефект плацебо","url":"https://uk.wikipedia.org/wiki/Плацебо"},{"name":"Гомогенність чужої групи","url":"https://uk.wikipedia.org/wiki/Гомогенність чужої групи"},{"name":"Міжрасовий ефект","url":"https://uk.wikipedia.org/wiki/Cross-Race ефект"},{"name":"Груповий фаворитизм","url":"https://uk.wikipedia.org/wiki/Груповий фаворитизм"},{"name":"Гало-ефект","url":"https://uk.wikipedia.org/wiki/Гало-ефект"},{"name":"Ефект вболівальника","url":"https://uk.wikipedia.org/wiki/Ефект вболівальника"},{"name":"Ефект позитивності","url":"https://uk.wikipedia.org/wiki/Ефект позитивності"},{"name":"Неприйняття чужої розробки","url":"https://uk.wikipedia.org/wiki/Винайдено не нами"},{"name":"Реактивне знецінення","url":"https://uk.wikipedia.org/wiki/Реактивне знецінення"},{"name":"Ефект знайомого маршруту","url":"https://uk.wikipedia.org/wiki/Ефект знайомого маршруту"},{"name":"Ментальний облік","url":"https://uk.wikipedia.org/wiki/Ментальна звітність"},{"name":"Апеляція до ймовірності","url":"https://uk.wikipedia.org/wiki/Апеляція до ймовірності"},{"name":"Упередження нормальності","url":"https://uk.wikipedia.org/wiki/Упередження нормального перебігу"},{"name":"Закон Мерфі","url":"https://uk.wikipedia.org/wiki/Закон Мерфі"},{"name":"Мислення з нульовою сумою","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Евристика_нульової_суми"},{"name":"Упередження виживання","url":"https://uk.wikipedia.org/wiki/Упередження виживання"},{"name":"Ефект субадитивності","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_субадитивності"},{"name":"Ефект деномінації","url":"https://uk.wikipedia.org/wiki/Ефект деномінації"},{"name":"Магічне число 7 ± 2","url":"https://uk.wikipedia.org/wiki/Магічне число сім, плюс-мінус два"},{"name":"Ілюзія прозорості","url":"https://uk.wikipedia.org/wiki/Ілюзія прозорості"},{"name":"Прокляття знання","url":"https://uk.wikipedia.org/wiki/Прокляття знання"},{"name":"Ефект рампи","url":"https://uk.wikipedia.org/wiki/Ефект рампи"},{"name":"Упередження зовнішнього впливу","url":"https://uk.wikipedia.org/wiki/Упередження зовнішнього впливу"},{"name":"Ілюзія зовнішнього впливу","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ілюзія_зовнішнього_впливу"},{"name":"Ілюзія асиметричної проникливості","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ілюзія_асиметричної_прозорливості"},{"name":"Ефект телескопії","url":"https://uk.wikipedia.org/wiki/Ефект телескопії"},{"name":"Рожева ретроспекція","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Рожеві_окуляри_минулого"},{"name":"Повзучий детермінізм","url":"https://uk.wikipedia.org/wiki/Повзучий детермінізм"},{"name":"Упередження результату","url":"https://uk.wikipedia.org/wiki/Упередження результату"},{"name":"Моральна удача","url":"https://uk.wikipedia.org/wiki/Моральна удача"},{"name":"Занепадництво","url":"https://uk.wikipedia.org/wiki/Деклінізм"},{"name":"Упередження впливу","url":"https://uk.wikipedia.org/wiki/Упередження впливу"},{"name":"Упередженість песимізму","url":"https://uk.wikipedia.org/wiki/Упередженість оптимізму#Упередженість_песимізму"},{"name":"Омана планування","url":"https://uk.wikipedia.org/wiki/Омана планування"},{"name":"Упередження економії часу","url":"https://uk.wikipedia.org/wiki/Упередження економії часу"},{"name":"Про-інноваційне упередження","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Про-інноваційне_упередження"},{"name":"Упередження проєкції","url":"https://uk.wikipedia.org/wiki/Упередження проєкції"},{"name":"Упередження витримки","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_витримки"},{"name":"Упередження постійності","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_постійності"},{"name":"Ефект надмірної впевненості","url":"https://uk.wikipedia.org/wiki/Ефект надмірної впевненості"},{"name":"Упередження соціальної бажаності","url":"https://uk.wikipedia.org/wiki/Соціальна бажаність"},{"name":"Ефект третьої особи","url":"https://uk.wikipedia.org/wiki/Гіпотеза ефекту третьої особи"},{"name":"Ефект хибного консенсусу","url":"https://uk.wikipedia.org/wiki/Ефект хибного консенсусу"},{"name":"Ефект простого — складного","url":"https://uk.wikipedia.org/wiki/Ефект простого — складного"},{"name":"Ефект озера Вобегон","url":"https://en.wikipedia.org/wiki/Lake_Wobegon#The_Lake_Wobegon_effect"},{"name":"Ефект Даннінга — Крюґера","url":"https://uk.wikipedia.org/wiki/Ефект Даннінга — Крюґера"},{"name":"Егоцентричне упередження","url":"https://uk.wikipedia.org/wiki/Егоцентричне упередження"},{"name":"Упередженість оптимізму","url":"https://uk.wikipedia.org/wiki/Упередженість оптимізму"},{"name":"Ефект Форера","url":"https://uk.wikipedia.org/wiki/Ефект Форера"},{"name":"Ефект Барнума","url":"https://uk.wikipedia.org/wiki/Ефект Форера"},{"name":"Упередження актор-спостерігач","url":"https://uk.wikipedia.org/wiki/Упередження актор-спостерігач"},{"name":"Ілюзія контролю","url":"https://uk.wikipedia.org/wiki/Ілюзія контролю"},{"name":"Ілюзорна перевага","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ілюзорна_перевага"},{"name":"Фундаментальна помилка атрибуції","url":"https://uk.wikipedia.org/wiki/Фундаментальна помилка атрибуції"},{"name":"Гіпотеза захисної атрибуції","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Гіпотеза_захисної_атрибуції"},{"name":"Упередження приписування рис","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_приписування_рис"},{"name":"Обґрунтування (виправдання) зусиль","url":"https://en.wikipedia.org/wiki/Effort_justification"},{"name":"Ефект Пельцмана","url":"https://uk.wikipedia.org/wiki/Ефект Пельцмана"},{"name":"Компенсація ризику","url":"https://uk.wikipedia.org/wiki/Ефект Пельцмана"},{"name":"Гіперболічне дисконтування","url":"https://uk.wikipedia.org/wiki/Гіперболічне дисконтування"},{"name":"Звернення до новизни","url":"https://uk.wikipedia.org/wiki/Argumentum ad novitatem"},{"name":"Ефект відомої жертви","url":"https://uk.wikipedia.org/wiki/Ефект відомої жертви"},{"name":"Помилка незворотних витрат","url":"https://uk.wikipedia.org/wiki/Незворотні затрати#оманливий_ефект_незворотних_(затонулих/потонулих)_витрат"},{"name":"Ірраціональна ескалація","url":"https://uk.wikipedia.org/wiki/Ірраціональна ескалація"},{"name":"Ескалація прив'язаності/зобов'язань","url":"https://uk.wikipedia.org/wiki/Ірраціональна ескалація"},{"name":"Ефект генерації","url":"https://uk.wikipedia.org/wiki/Ефект генерації"},{"name":"Уникання втрат","url":"https://uk.wikipedia.org/wiki/Неприйняття втрат"},{"name":"IKEA-ефект","url":"https://uk.wikipedia.org/wiki/IKEA-ефект"},{"name":"Упередження одиниці","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_одиниці"},{"name":"Упередження нульового ризику","url":"https://uk.wikipedia.org/wiki/Упередження нульового ризику"},{"name":"Ефект диспозиції","url":"https://uk.wikipedia.org/wiki/Ефект диспозиції"},{"name":"Ефект псевдовизначеності","url":"https://en.wikipedia.org/wiki/Pseudocertainty effect"},{"name":"Ефект складності обробки інформації","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_складності_обробки_інформації"},{"name":"Ефект володіння","url":"https://uk.wikipedia.org/wiki/Ефект володіння"},{"name":"Ефект зворотнього результату","url":"https://uk.wikipedia.org/wiki/Підтверджувальне упередження#Ефект_зворотнього_результату"},{"name":"Виправдання системи","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Системне_виправдання"},{"name":"Зворотна психологія","url":"https://uk.wikipedia.org/wiki/Зворотна психологія"},{"name":"Реактивний опір","url":"https://uk.wikipedia.org/wiki/Реактивний опір (психологія)"},{"name":"Ефект обманки","url":"https://uk.wikipedia.org/wiki/Ефект обманки"},{"name":"Упередженість соціального порівняння","url":"https://uk.wikipedia.org/wiki/Упередженість соціального порівняння"},{"name":"Упередження статусу-кво","url":"https://uk.wikipedia.org/wiki/Упередження статусу-кво"},{"name":"Ефект неоднозначності","url":"https://uk.wikipedia.org/wiki/Ефект неоднозначності"},{"name":"Інформаційне упередження","url":"https://uk.wikipedia.org/wiki/Інформаційне упередження (психологія)"},{"name":"Упередження переконань","url":"https://uk.wikipedia.org/wiki/Упередження переконань"},{"name":"Ефект «рима як підстава»","url":"https://uk.wikipedia.org/wiki/Ефект «рима як підстава»"},{"name":"Ефект велосипедного сараю","url":"https://uk.wikipedia.org/wiki/Закон тривіальності"},{"name":"Закон тривіальності","url":"https://uk.wikipedia.org/wiki/Закон тривіальності"},{"name":"Омана поєднання","url":"https://uk.wikipedia.org/wiki/Омана поєднання"},{"name":"Бритва Оккама","url":"https://uk.wikipedia.org/wiki/Бритва Оккама"},{"name":"Ефект менше-краще","url":"https://uk.wikipedia.org/wiki/Ефект менше-краще"},{"name":"Помилкова атрибуція спогадів","url":"https://uk.wikipedia.org/wiki/Помилкова атрибуція спогадів"},{"name":"Плутанина / помилка з джерелом","url":"https://uk.wikipedia.org/wiki/Помилкова атрибуція спогадів"},{"name":"Криптомнезія","url":"https://uk.wikipedia.org/wiki/Криптомнезія"},{"name":"Парамнезія","url":"https://uk.wikipedia.org/wiki/Парамнезія"},{"name":"Сугестивність","url":"https://uk.wikipedia.org/wiki/Сугестивність"},{"name":"Ефект інтервалу","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_інтервалу"},{"name":"Неявна асоціація","url":"https://uk.wikipedia.org/wiki/Неявний стереотип"},{"name":"Неявна асоціація","url":"https://uk.wikipedia.org/wiki/Неявна асоціація"},{"name":"Упередження стереотипу","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Упередження_стереотипів"},{"name":"Упередження","url":"https://uk.wikipedia.org/wiki/Упередження"},{"name":"Зникаючий / згасаючий афект","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Зникаючий_афект"},{"name":"Правило піку та кінця","url":"https://uk.wikipedia.org/wiki/Правило піку та кінця"},{"name":"Вирівнювання та загострення","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Вирівнювання_та_загострення"},{"name":"Ефект дезінформації","url":"https://uk.wikipedia.org/wiki/Ефект дезінформації"},{"name":"Послідовне пригадування","url":"https://en.wikipedia.org/wiki/Recall_(memory)#Serial_recall"},{"name":"Ефект довжини списку","url":"https://en.wikipedia.org/wiki/Recall_(memory)#Serial_recall"},{"name":"Відкидання тривалості","url":"https://uk.wikipedia.org/wiki/Відкидання тривалості"},{"name":"Ефект модальності","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_модальності"},{"name":"Гальмування пам'яті","url":"https://en.wikipedia.org/wiki/Memory_inhibition"},{"name":"Ефект первинності","url":"https://uk.wikipedia.org/wiki/Ефект порядкового номера#Ефект_первинності"},{"name":"Ефект нещодавності","url":"https://uk.wikipedia.org/wiki/Ефект порядкового номера#Ефект_нещодавності"},{"name":"Ефект часткової підказки","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_часткової_підказки"},{"name":"Ефект порядкового номера","url":"https://uk.wikipedia.org/wiki/Ефект порядкового номера"},{"name":"Ефект суфікса","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_суфікса"},{"name":"Модель рівнів обробки","url":"https://en.wikipedia.org/wiki/Levels-of-processing_effect"},{"name":"Розсіяність уваги","url":"https://en.wikipedia.org/wiki/Absent-mindedness"},{"name":"Ефект тестування","url":"https://uk.wikipedia.org/wiki/Ефект тестування"},{"name":"Ефект наступного в черзі","url":"https://uk.wikipedia.org/wiki/Перелік когнітивних упереджень#Ефект_наступного_в_черзі"},{"name":"Google-ефект","url":"https://uk.wikipedia.org/wiki/Ефект Google"},{"name":"Феномен на «кінчику язика»","url":"https://uk.wikipedia.org/wiki/На кінчику язика"}];
+
+  const sidebar    = document.getElementById('sidebar');
+  const toggle     = document.getElementById('sidebar-toggle');
+  const searchEl   = document.getElementById('bias-search');
+  const listEl     = document.getElementById('bias-list');
+  const countEl    = document.getElementById('bias-count');
+  const emptyEl    = document.getElementById('bias-empty');
+  const hintEl     = document.getElementById('hint');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function highlight(text, query) {
+    if (!query) return escapeHtml(text);
+    const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+    return escapeHtml(text).replace(re, '<mark>$1</mark>');
+  }
+
+  function renderList(query) {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? BIASES.filter(b => b.name.toLowerCase().includes(q))
+      : BIASES;
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach(b => {
+      const a = document.createElement('a');
+      a.className = 'bias-item';
+      a.href = b.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.innerHTML = highlight(b.name, q);
+      frag.appendChild(a);
+    });
+
+    // Remove old items (keep empty msg)
+    [...listEl.querySelectorAll('.bias-item')].forEach(el => el.remove());
+    listEl.appendChild(frag);
+
+    countEl.textContent = q ? `${filtered.length} з ${BIASES.length}` : `${BIASES.length} упереджень`;
+    emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
+  }
+
+  toggle.addEventListener('click', () => {
+    const open = sidebar.classList.toggle('open');
+    toggle.classList.toggle('open', open);
+    hintEl.classList.toggle('shifted', open);
+    if (open) { searchEl.focus(); renderList(searchEl.value); }
+  });
+
+  searchEl.addEventListener('input', () => renderList(searchEl.value));
+
+  renderList('');
 </script>
 </body>
 </html>
